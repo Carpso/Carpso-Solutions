@@ -137,9 +137,7 @@ export default function StoreContent() {
                         <div className="text-xs text-[#8b949e] flex justify-between items-center pr-1">
                             <span>5.0 <span className="text-[#eab308]">★</span></span>
                             <span className="font-medium flex items-center gap-1.5 text-green-400">
-                                {app.price === 500 && (
-                                    <span className="bg-red-500/20 text-red-500 font-bold uppercase text-[9px] px-1.5 py-0.5 rounded border border-red-500/30">Promo</span>
-                                )}
+                                <span className="bg-red-500/20 text-red-500 font-bold uppercase text-[9px] px-1.5 py-0.5 rounded border border-red-500/30">Promo</span>
                                 K{app.price.toLocaleString('en-US')}
                             </span>
                         </div>

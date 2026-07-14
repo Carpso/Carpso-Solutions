@@ -135,9 +135,7 @@ export default function AppDetailPage({ params }) {
                                     onClick={openBuyModal}
                                     className="bg-[#34a853] hover:bg-[#2e9348] text-white px-8 py-3.5 rounded-xl font-bold flex items-center gap-2 w-full sm:w-auto shadow-lg transition-transform hover:scale-105"
                                 >
-                                    {appData.price === 500 && (
-                                        <span className="bg-red-500/20 text-red-500 text-[10px] px-2 py-0.5 rounded border border-red-500/30 uppercase tracking-wider mr-1">Promo</span>
-                                    )}
+                                    <span className="bg-red-500/20 text-red-500 text-[10px] px-2 py-0.5 rounded border border-red-500/30 uppercase tracking-wider mr-1">Promo</span>
                                     Buy App for K{appData.price.toLocaleString('en-US')}
                                 </button>
                             )}
@@ -293,11 +291,9 @@ export default function AppDetailPage({ params }) {
                                         <span>Total Amount</span>
                                         <span className="text-[#34a853]">K{(appData.price * 1.05).toLocaleString('en-US')}</span>
                                     </div>
-                                    {appData.price === 500 && (
-                                        <div className="mt-3 text-[10px] uppercase text-red-400 font-bold tracking-wider text-right animate-pulse">
-                                            🔥 Limited Time Promo Active
-                                        </div>
-                                    )}
+                                    <div className="mt-3 text-[10px] uppercase text-red-400 font-bold tracking-wider text-right animate-pulse">
+                                        🔥 Limited Time Promo Active
+                                    </div>
                                 </div>
 
                                 <div className="space-y-4 mb-6">
