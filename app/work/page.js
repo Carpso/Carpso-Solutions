@@ -59,12 +59,12 @@ export default function Work() {
                 {videos.map((vid, idx) => (
                     <div key={idx} className={`flex flex-col ${idx % 2 !== 0 ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-16`}>
 
-                        <div className="w-full lg:w-1/2 rounded-[2rem] overflow-hidden shadow-2xl bg-black border border-white/10 p-2 relative group">
+                        <div className="w-full lg:w-1/2 flex justify-center rounded-[2rem] overflow-hidden shadow-2xl bg-black border border-white/10 p-2 relative group max-w-[360px] mx-auto">
                             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none z-10"></div>
                             <video
                                 controls
                                 preload="metadata"
-                                className="w-full h-auto aspect-video object-cover rounded-[1.5rem] relative z-20 group-hover:scale-[1.02] transition-transform duration-500"
+                                className="w-full h-auto aspect-[9/16] object-cover rounded-[1.5rem] relative z-20 group-hover:scale-[1.02] transition-transform duration-500"
                                 poster=""
                             >
                                 <source src={vid.src} type="video/mp4" />
