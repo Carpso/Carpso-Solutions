@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import crypto from 'crypto';
+import { notifyWhatsApp, buildPaymentAlert } from '../../../lib/notify';
 
 const MAX_WEBHOOK_AGE_SEC = 300;
 
@@ -50,20 +52,53 @@ export async function POST(req) {
 
         const payload = JSON.parse(rawBody);
 
+        let db = null;
+        try {
+            const { env } = getCloudflareContext();
+            db = env.DB;
+        } catch {
+            console.log('[Webhook] D1 not available (local dev)');
+        }
+
         if (payload.type === 'Collection' && payload.status === 'Successful') {
             const email = payload.email || '';
-            const identifier = payload.identifier || payload.referenceId;
+            const reference = payload.referenceId || payload.identifier;
             const amount = payload.amount;
 
-            console.log(`[Webhook] Payment successful for ${identifier} — K${amount} by ${email}`);
+            console.log(`[Webhook] Payment successful for ${reference} — K${amount} by ${email}`);
 
-            console.log(`Send email to ${email} granting access to download`);
+            if (db) {
+                const result = await db.prepare(
+                    `UPDATE orders SET status = 'paid', webhook_received_at = ?, updated_at = ? WHERE reference = ? OR lipila_ref = ?`
+                ).bind(new Date().toISOString(), new Date().toISOString(), reference, reference).run();
+
+                if (result.meta.changes > 0) {
+                    const order = await db.prepare(
+                        `SELECT app_name, payer_name FROM orders WHERE reference = ? OR lipila_ref = ?`
+                    ).bind(reference, reference).first();
+
+                    if (order) {
+                        notifyWhatsApp(buildPaymentAlert(
+                            order.app_name, order.payer_name, email, amount, reference
+                        ));
+                    }
+                }
+            }
 
             return NextResponse.json({ received: true, status: payload.status });
         }
 
         if (payload.type === 'Disbursement') {
             console.log(`[Webhook] Payout ${payload.status} for ${payload.referenceId} — K${payload.amount}`);
+            if (db) {
+                await db.prepare(
+                    `UPDATE orders SET status = ?, updated_at = ? WHERE reference = ?`
+                ).bind(
+                    payload.status === 'Successful' ? 'settled' : `payout_${payload.status?.toLowerCase() || 'unknown'}`,
+                    new Date().toISOString(),
+                    payload.referenceId
+                ).run();
+            }
             return NextResponse.json({ received: true, status: payload.status });
         }
 

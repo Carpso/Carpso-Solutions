@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { apps } from '../../../data/apps';
+import { notifyWhatsApp, buildOrderAlert } from '../../../lib/notify';
 
 const LIPILA_BASE_URL = 'https://blz.lipila.io/api';
 
@@ -37,6 +39,26 @@ export async function POST(req) {
         const referenceId = crypto.randomUUID();
         const webhookUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/webhook`;
         const amount = Number((appData.price * 1.05).toFixed(2));
+        const fee = amount - appData.price;
+
+        let db = null;
+        try {
+            const { env } = getCloudflareContext();
+            db = env.DB;
+        } catch {
+            console.log('[Checkout] D1 not available (local dev)');
+        }
+
+        if (db) {
+            await db.prepare(
+                `INSERT INTO orders (app_id, app_name, payer_name, email, phone, amount, fee, reference, status, created_at, updated_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`
+            ).bind(
+                appId, appData.name, payerName || 'Unknown', email, formattedPhone,
+                amount, fee, referenceId,
+                new Date().toISOString(), new Date().toISOString()
+            ).run();
+        }
 
         const collectRes = await fetch(`${LIPILA_BASE_URL}/v1/collections/mobile-money`, {
             method: "POST",
@@ -67,13 +89,27 @@ export async function POST(req) {
         }
 
         if (!collectRes.ok) {
+            if (db) {
+                await db.prepare(
+                    `UPDATE orders SET status = 'failed', updated_at = ? WHERE reference = ?`
+                ).bind(new Date().toISOString(), referenceId).run();
+            }
             return NextResponse.json({
                 error: "Payment initiation failed",
                 details: collectData?.message || "Please try again"
             }, { status: 502 });
         }
 
-        // Dispatch automated settlement payout to merchant (0976847775)
+        if (db && collectData?.data?.id) {
+            await db.prepare(
+                `UPDATE orders SET lipila_ref = ?, updated_at = ? WHERE reference = ?`
+            ).bind(collectData.data.id, new Date().toISOString(), referenceId).run();
+        }
+
+        notifyWhatsApp(buildOrderAlert(
+            appData.name, payerName || 'Unknown', email, formattedPhone, amount, referenceId, 'pending'
+        ));
+
         const payoutRef = `SETTLE-${referenceId.substring(0, 12)}`;
         fetch(`${LIPILA_BASE_URL}/v1/payouts/mobile-money`, {
             method: "POST",
