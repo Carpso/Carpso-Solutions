@@ -3,7 +3,7 @@
 import { useState, use } from 'react';
 import { notFound } from 'next/navigation';
 import { apps } from '../../../data/apps';
-import { Share2, Lock, ShieldCheck, Download, MessageCircle, Star, ArrowLeft, X } from 'lucide-react';
+import { Share2, Lock, ShieldCheck, Download, MessageCircle, Star, ArrowLeft, X, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Head from 'next/head';
@@ -121,15 +121,26 @@ export default function AppDetailPage({ params }) {
                         </Link>
 
                         <div className="flex flex-wrap items-center gap-4 mt-6">
-                            <button
-                                onClick={openBuyModal}
-                                className="bg-[#34a853] hover:bg-[#2e9348] text-white px-8 py-3.5 rounded-xl font-bold flex items-center gap-2 w-full sm:w-auto shadow-lg transition-transform hover:scale-105"
-                            >
-                                {appData.price === 500 && (
-                                    <span className="bg-red-500/20 text-red-500 text-[10px] px-2 py-0.5 rounded border border-red-500/30 uppercase tracking-wider mr-1">Promo</span>
-                                )}
-                                Buy App for K{appData.price.toLocaleString('en-US')}
-                            </button>
+                            {appData.playStoreUrl ? (
+                                <a
+                                    href={appData.playStoreUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="bg-[#34a853] hover:bg-[#2e9348] text-white px-8 py-3.5 rounded-xl font-bold flex items-center gap-2 w-full sm:w-auto shadow-lg transition-transform hover:scale-105"
+                                >
+                                    <Download className="w-5 h-5" /> Get on Google Play
+                                </a>
+                            ) : (
+                                <button
+                                    onClick={openBuyModal}
+                                    className="bg-[#34a853] hover:bg-[#2e9348] text-white px-8 py-3.5 rounded-xl font-bold flex items-center gap-2 w-full sm:w-auto shadow-lg transition-transform hover:scale-105"
+                                >
+                                    {appData.price === 500 && (
+                                        <span className="bg-red-500/20 text-red-500 text-[10px] px-2 py-0.5 rounded border border-red-500/30 uppercase tracking-wider mr-1">Promo</span>
+                                    )}
+                                    Buy App for K{appData.price.toLocaleString('en-US')}
+                                </button>
+                            )}
                             <a
                                 href={whatsappUrl}
                                 target="_blank"
